@@ -22,7 +22,7 @@ func main() {
 	configMap := &ckafka.ConfigMap{
 		"bootstrap.servers": "host.docker.internal:9094",
 		"group.id":          "myGroup",
-		"aut.offset.reset":  "earliest",
+		"auto.offset.reset": "latest",
 	}
 
 	producer := kafka.NewKafkaProducer(configMap)

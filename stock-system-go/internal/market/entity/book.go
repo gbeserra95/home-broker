@@ -7,7 +7,7 @@ import (
 
 type Book struct {
 	Order         []*Order
-	Transaction   []*Transaction
+	Transactions  []*Transaction
 	OrdersChan    chan *Order // input from Kafka
 	OrdersChanOut chan *Order // output to Kafka
 	Wg            *sync.WaitGroup
@@ -16,7 +16,7 @@ type Book struct {
 func NewBook(orderChan chan *Order, orderChanOut chan *Order, wg *sync.WaitGroup) *Book {
 	return &Book{
 		Order:         []*Order{},
-		Transaction:   []*Transaction{},
+		Transactions:  []*Transaction{},
 		OrdersChan:    orderChan,
 		OrdersChanOut: orderChanOut,
 		Wg:            wg,
@@ -66,7 +66,7 @@ func (b *Book) Trade() {
 				buyOrder := buyOrders[asset].Pop().(*Order)
 
 				if buyOrder.PendingShares > 0 {
-					transaction := NewTransaction(buyOrder, order, order.Shares, buyOrder.Price)
+					transaction := NewTransaction(order, buyOrder, order.Shares, buyOrder.Price)
 					b.AddTransaction(transaction, b.Wg)
 					buyOrder.Transactions = append(buyOrder.Transactions, transaction)
 					order.Transactions = append(order.Transactions, transaction)
@@ -95,7 +95,7 @@ func (b *Book) AddTransaction(transaction *Transaction, wg *sync.WaitGroup) {
 	}
 
 	transaction.SellingOrder.Investor.UpdateAssetPosition(transaction.SellingOrder.Asset.ID, -minShares)
-	transaction.AddSellOrderPendingShares(minShares)
+	transaction.AddSellOrderPendingShares(-minShares)
 
 	transaction.BuyingOrder.Investor.UpdateAssetPosition(transaction.BuyingOrder.Asset.ID, minShares)
 	transaction.AddBuyOrderPendingShares(-minShares)
@@ -105,5 +105,5 @@ func (b *Book) AddTransaction(transaction *Transaction, wg *sync.WaitGroup) {
 	transaction.CloseBuyOrder()
 	transaction.CloseSellOrder()
 
-	b.Transaction = append(b.Transaction, transaction)
+	b.Transactions = append(b.Transactions, transaction)
 }
